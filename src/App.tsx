@@ -25,7 +25,8 @@ import {
   getStoredUserProfile,
   saveUserProfile,
   recordVisitedTeam,
-  getLastActiveTeamCode
+  getLastActiveTeamCode,
+  getDefaultSampleTeam
 } from './services/api';
 import { Header } from './components/Header';
 import { SidebarFilters } from './components/SidebarFilters';
@@ -44,8 +45,8 @@ import { formatDateToYMD } from './utils/dateUtils';
 import { AlertCircle, Calendar, Plus, RefreshCw, Share2, Sparkles, Users } from 'lucide-react';
 
 export default function App() {
-  // Current Team & Events
-  const [team, setTeam] = useState<Team | null>(null);
+  // Current Team & Events: Initialize with default sample team so calendar is rendered immediately on first paint
+  const [team, setTeam] = useState<Team | null>(getDefaultSampleTeam);
   const [currentUser, setCurrentUser] = useState<UserProfile>(getStoredUserProfile);
   const [viewMode, setViewMode] = useState<CalendarViewMode>('month');
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
@@ -56,13 +57,13 @@ export default function App() {
     Object.keys(CATEGORIES) as EventCategory[]
   );
 
-  // Sync & Loading state
-  const [isLoading, setIsLoading] = useState(true);
+  // Sync & Loading state (seamless background sync, never block calendar)
+  const [isLoading, setIsLoading] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
+  const [lastSyncTime, setLastSyncTime] = useState<Date | null>(new Date());
   const [syncError, setSyncError] = useState<string | null>(null);
 
-  // Modals state
+  // Modals state (never open modal on start)
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -73,7 +74,7 @@ export default function App() {
   const [modalInitialDate, setModalInitialDate] = useState<string | undefined>(undefined);
   const [modalInitialTime, setModalInitialTime] = useState<string | undefined>(undefined);
 
-  // Load team by code
+  // Load team by code with seamless fallback to demo team
   const loadTeamData = useCallback(async (code: string, pin?: string, silent = false) => {
     try {
       if (!silent) setIsSyncing(true);
@@ -83,11 +84,21 @@ export default function App() {
       setLastSyncTime(new Date());
       recordVisitedTeam(teamData.code, teamData.name);
     } catch (err: any) {
-      console.error('Failed to load team:', err);
-      setSyncError(err.message || '팀 일정을 불러오는데 실패했습니다.');
-      if (!silent) {
-        setIsTeamModalOpen(true);
+      console.warn('Could not fetch remote team:', err);
+      if (code !== 'DEMO') {
+        try {
+          const fallbackData = await fetchTeam('DEMO');
+          setTeam(fallbackData);
+          setLastSyncTime(new Date());
+          recordVisitedTeam(fallbackData.code, fallbackData.name);
+          return;
+        } catch {
+          // ignore
+        }
       }
+      // Ensure team remains active so calendar is always visible
+      setTeam((prev) => prev || getDefaultSampleTeam());
+      // Do NOT open modal automatically! The user can click to change team if desired.
     } finally {
       setIsLoading(false);
       setIsSyncing(false);
@@ -380,59 +391,61 @@ export default function App() {
             />
 
             <div className="flex-1 flex flex-col lg:flex-row gap-6 items-start">
-              {/* Left Sidebar: Member Filter, Category Filter, Export */}
-            <SidebarFilters
-              team={team}
-              events={team.events}
-              selectedMember={selectedMember}
-              onSelectMember={setSelectedMember}
-              selectedCategories={selectedCategories}
-              onToggleCategory={handleToggleCategory}
-              onSelectAllCategories={handleSelectAllCategories}
-              onOpenNewEvent={() => handleOpenNewEvent()}
-              onOpenShareModal={() => setIsShareModalOpen(true)}
-              onOpenAddMemberModal={() => setIsProfileModalOpen(true)}
-              onOpenEditTeamModal={() => setIsEditTeamModalOpen(true)}
-              onUpdateTeam={handleUpdateTeam}
-            />
+              {/* 1. Calendar Views (Primary - Shown First) */}
+              <div className="flex-1 w-full min-w-0 flex flex-col min-h-[620px] order-1 lg:order-1">
+                {viewMode === 'month' && (
+                  <CalendarMonthView
+                    currentDate={currentDate}
+                    onChangeMonth={setCurrentDate}
+                    events={filteredEvents}
+                    onSelectEvent={(evt) => setSelectedEventForDetail(evt)}
+                    onSelectDate={(dateStr) => handleOpenNewEvent(dateStr)}
+                  />
+                )}
 
-            {/* Calendar Views */}
-            <div className="flex-1 w-full min-w-0 flex flex-col min-h-[620px]">
-              {viewMode === 'month' && (
-                <CalendarMonthView
-                  currentDate={currentDate}
-                  onChangeMonth={setCurrentDate}
-                  events={filteredEvents}
-                  onSelectEvent={(evt) => setSelectedEventForDetail(evt)}
-                  onSelectDate={(dateStr) => handleOpenNewEvent(dateStr)}
+                {viewMode === 'week' && (
+                  <CalendarWeekView
+                    currentDate={currentDate}
+                    onChangeDate={setCurrentDate}
+                    events={filteredEvents}
+                    onSelectEvent={(evt) => setSelectedEventForDetail(evt)}
+                    onSelectTimeSlot={(dateStr, timeStr) => handleOpenNewEvent(dateStr, timeStr)}
+                  />
+                )}
+
+                {viewMode === 'agenda' && (
+                  <CalendarAgendaView
+                    events={filteredEvents}
+                    onSelectEvent={(evt) => setSelectedEventForDetail(evt)}
+                    onOpenNewEvent={() => handleOpenNewEvent()}
+                  />
+                )}
+
+                {/* YouTube Video Section Below Calendar */}
+                <YouTubeSection
+                  url="https://www.youtube.com/watch?v=1e_N5DHua64"
+                  videoId="1e_N5DHua64"
                 />
-              )}
+              </div>
 
-              {viewMode === 'week' && (
-                <CalendarWeekView
-                  currentDate={currentDate}
-                  onChangeDate={setCurrentDate}
-                  events={filteredEvents}
-                  onSelectEvent={(evt) => setSelectedEventForDetail(evt)}
-                  onSelectTimeSlot={(dateStr, timeStr) => handleOpenNewEvent(dateStr, timeStr)}
-                />
-              )}
-
-              {viewMode === 'agenda' && (
-                <CalendarAgendaView
-                  events={filteredEvents}
-                  onSelectEvent={(evt) => setSelectedEventForDetail(evt)}
+              {/* 2. Team Members & Filter Sidebar (Shown After Calendar) */}
+              <div className="w-full lg:w-64 shrink-0 order-2 lg:order-2">
+                <SidebarFilters
+                  team={team}
+                  events={team.events}
+                  selectedMember={selectedMember}
+                  onSelectMember={setSelectedMember}
+                  selectedCategories={selectedCategories}
+                  onToggleCategory={handleToggleCategory}
+                  onSelectAllCategories={handleSelectAllCategories}
                   onOpenNewEvent={() => handleOpenNewEvent()}
+                  onOpenShareModal={() => setIsShareModalOpen(true)}
+                  onOpenAddMemberModal={() => setIsProfileModalOpen(true)}
+                  onOpenEditTeamModal={() => setIsEditTeamModalOpen(true)}
+                  onUpdateTeam={handleUpdateTeam}
                 />
-              )}
-
-              {/* YouTube Video Section Below Calendar */}
-              <YouTubeSection
-                url="https://www.youtube.com/watch?v=1e_N5DHua64"
-                videoId="1e_N5DHua64"
-              />
+              </div>
             </div>
-          </div>
         </div>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center py-20 text-center">

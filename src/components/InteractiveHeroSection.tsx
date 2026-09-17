@@ -49,7 +49,7 @@ export const InteractiveHeroSection: React.FC<InteractiveHeroSectionProps> = ({
   onJumpToToday,
   onUpdateTeamNotice,
 }) => {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
   const [isEditingNotice, setIsEditingNotice] = useState(false);
   const [noticeText, setNoticeText] = useState(team.description || '');

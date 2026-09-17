@@ -94,27 +94,46 @@ export const CalendarWeekView: React.FC<CalendarWeekViewProps> = ({
         </div>
         {weekDays.map((d, idx) => {
           const dayName = ['일', '월', '화', '수', '목', '금', '토'][idx];
+          const isRedDay = d.isHoliday || d.isSunday;
           return (
             <div
               key={d.dateStr}
               className={`py-2 px-1 text-center border-r last:border-r-0 border-slate-200 ${
-                d.isToday ? 'bg-indigo-50/60' : ''
+                d.isToday
+                  ? 'bg-indigo-50/60'
+                  : d.isHoliday
+                  ? 'bg-rose-50/30'
+                  : ''
               }`}
             >
               <div
-                className={`text-[11px] ${
-                  idx === 0 ? 'text-rose-600' : idx === 6 ? 'text-sky-600' : 'text-slate-500'
+                className={`text-[11px] font-semibold ${
+                  isRedDay ? 'text-rose-600' : idx === 6 ? 'text-sky-600' : 'text-slate-500'
                 }`}
               >
                 {dayName}
               </div>
               <div
-                className={`inline-flex items-center justify-center text-sm font-bold w-6 h-6 rounded-full mx-auto mt-0.5 ${
-                  d.isToday ? 'bg-indigo-600 text-white' : 'text-slate-800'
+                className={`inline-flex items-center justify-center text-sm font-extrabold w-6 h-6 rounded-full mx-auto mt-0.5 ${
+                  d.isToday
+                    ? 'bg-indigo-600 text-white'
+                    : isRedDay
+                    ? 'text-rose-600'
+                    : idx === 6
+                    ? 'text-sky-600'
+                    : 'text-slate-800'
                 }`}
               >
                 {d.dayNumber}
               </div>
+              {d.isHoliday && d.holidayName && (
+                <div
+                  className="text-[9px] font-bold text-rose-600 truncate px-0.5 mt-0.5"
+                  title={d.holidayName}
+                >
+                  {d.holidayName}
+                </div>
+              )}
             </div>
           );
         })}

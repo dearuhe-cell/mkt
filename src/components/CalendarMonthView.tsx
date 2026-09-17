@@ -123,26 +123,46 @@ export const CalendarMonthView: React.FC<CalendarMonthViewProps> = ({
               key={day.dateStr}
               onClick={() => onSelectDate(day.dateStr)}
               className={`min-h-[110px] lg:min-h-[125px] p-1.5 sm:p-2 flex flex-col justify-between transition-colors cursor-pointer group ${
-                day.isCurrentMonth ? 'bg-white' : 'bg-slate-50/70 text-slate-400'
-              } hover:bg-indigo-50/30`}
+                day.isCurrentMonth
+                  ? day.isHoliday
+                    ? 'bg-rose-50/20 hover:bg-rose-50/40'
+                    : 'bg-white hover:bg-indigo-50/30'
+                  : 'bg-slate-50/70 text-slate-400'
+              }`}
             >
               {/* Day Number and Badges */}
-              <div className="flex items-center justify-between mb-1">
-                <span
-                  className={`inline-flex items-center justify-center text-xs font-bold w-6 h-6 rounded-full transition-colors ${
-                    day.isToday
-                      ? 'bg-indigo-600 text-white shadow-2xs'
-                      : day.isSunday
-                      ? 'text-rose-600 group-hover:text-rose-700'
-                      : day.isSaturday
-                      ? 'text-sky-600 group-hover:text-sky-700'
-                      : day.isCurrentMonth
-                      ? 'text-slate-800'
-                      : 'text-slate-400'
-                  }`}
-                >
-                  {day.dayNumber}
-                </span>
+              <div className="flex items-center justify-between gap-1 mb-1">
+                <div className="flex items-center gap-1 min-w-0">
+                  <span
+                    className={`inline-flex items-center justify-center text-xs font-bold w-6 h-6 rounded-full transition-colors shrink-0 ${
+                      day.isToday
+                        ? 'bg-indigo-600 text-white shadow-2xs'
+                        : day.isHoliday || day.isSunday
+                        ? day.isCurrentMonth
+                          ? 'text-rose-600 font-extrabold group-hover:text-rose-700'
+                          : 'text-rose-400'
+                        : day.isSaturday
+                        ? day.isCurrentMonth
+                          ? 'text-sky-600 group-hover:text-sky-700'
+                          : 'text-sky-400'
+                        : day.isCurrentMonth
+                        ? 'text-slate-800'
+                        : 'text-slate-400'
+                    }`}
+                  >
+                    {day.dayNumber}
+                  </span>
+                  {day.isHoliday && day.holidayName && (
+                    <span
+                      className={`text-[10px] font-bold truncate ${
+                        day.isCurrentMonth ? 'text-rose-600' : 'text-rose-400'
+                      }`}
+                      title={day.holidayName}
+                    >
+                      {day.holidayName}
+                    </span>
+                  )}
+                </div>
 
                 {/* Quick Add icon on hover */}
                 <button

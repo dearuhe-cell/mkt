@@ -213,3 +213,88 @@ export function getShareableUrl(teamCode: string): string {
   const base = window.location.origin + window.location.pathname;
   return `${base}?team=${encodeURIComponent(teamCode)}`;
 }
+
+export function getDefaultSampleTeam(): Team {
+  const today = new Date();
+  const formatD = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+
+  const d1 = new Date(today);
+  const d2 = new Date(today);
+  d2.setDate(today.getDate() + 1);
+  const d3 = new Date(today);
+  d3.setDate(today.getDate() + 3);
+
+  return {
+    id: 'sample-team',
+    code: 'DEMO',
+    name: '스타트업 프로젝트 A팀',
+    description: '로그인 없이 누구나 코드로 참여하는 팀 일정 공간',
+    members: [
+      { id: 'm1', name: '김민수', color: '#6366f1', joinedAt: new Date().toISOString() },
+      { id: 'm2', name: '이지혜', color: '#10b981', joinedAt: new Date().toISOString() },
+      { id: 'm3', name: '박준영', color: '#f59e0b', joinedAt: new Date().toISOString() },
+    ],
+    events: [
+      {
+        id: 'e1',
+        teamId: 'sample-team',
+        title: '주간 스프린트 킥오프 회의',
+        description: '이번 주 목표 공유 및 주요 태스크 우선순위 논의',
+        category: 'meeting',
+        startDate: formatD(d1),
+        startTime: '10:00',
+        endDate: formatD(d1),
+        endTime: '11:30',
+        isAllDay: false,
+        location: '회의실 A (또는 온라인)',
+        meetingLink: 'https://meet.google.com/new',
+        creatorName: '김민수',
+        attendees: ['김민수', '이지혜', '박준영'],
+        checklist: [
+          { id: 'c1', text: '전주 배포 결과 리뷰', completed: true },
+          { id: 'c2', text: '신규 피처 스펙 확정', completed: false },
+        ],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      {
+        id: 'e2',
+        teamId: 'sample-team',
+        title: '고객사 미팅 및 제품 데모',
+        description: 'B2B 신규 파트너십 데모 시연 및 Q&A',
+        category: 'outwork',
+        startDate: formatD(d2),
+        startTime: '14:00',
+        endDate: formatD(d2),
+        endTime: '16:00',
+        isAllDay: false,
+        location: '역삼 테헤란로 본사',
+        creatorName: '박준영',
+        attendees: ['박준영', '김민수'],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      {
+        id: 'e3',
+        teamId: 'sample-team',
+        title: '3분기 로드맵 마감일',
+        description: '기획서 최종 취합 및 리뷰 완료',
+        category: 'deadline',
+        startDate: formatD(d3),
+        endDate: formatD(d3),
+        isAllDay: true,
+        creatorName: '이지혜',
+        attendees: ['이지혜'],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+    ],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+}

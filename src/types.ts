@@ -112,6 +112,7 @@ export interface Team {
   description?: string;
   pin?: string; // optional PIN for privacy
   members: TeamMember[];
+  events: TeamEvent[];
   createdAt: string;
   updatedAt: string;
 }
