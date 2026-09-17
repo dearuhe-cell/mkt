@@ -1,0 +1,6 @@
+{
+  "name": "팀 일정공유",
+  "description": "로그인 없이 링크와 팀 코드로 즉시 일정을 공유하고 협업하는 팀 캘린더",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
